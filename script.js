@@ -97,3 +97,31 @@ function loadChat() {
     chatBox.appendChild(msgDiv);
   });
 }
+
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+function sendMessage() {
+  const msg = messageInput.value.trim();
+  if (msg === '') return;
+
+  // user message
+  const userMsg = document.createElement('div');
+  userMsg.classList.add('message', 'sent');
+  userMsg.innerText = msg;
+  chatBox.appendChild(userMsg);
+
+  messageInput.value = '';
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  // auto-reply
+  setTimeout(() => {
+    const botMsg = document.createElement('div');
+    botMsg.classList.add('message', 'received');
+    botMsg.innerText = "✅ Got it! (" + msg + ")";
+    chatBox.appendChild(botMsg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }, 1000);
+}
