@@ -125,3 +125,48 @@ function sendMessage() {
     chatBox.scrollTop = chatBox.scrollHeight;
   }, 1000);
 }
+const firebaseConfig = {
+apiKey: "AIzaSyBkqiOMP4TOblb1wisLUSZ4vS-1WTVoqxQ",
+  authDomain: "chat-app-4cf9a.firebaseapp.com",
+  projectId: "chat-app-4cf9a",
+  storageBucket: "chat-app-4cf9a.firebasestorage.app",
+  messagingSenderId: "245055908079",
+  appId: "1:245055908079:web:8bba9dc811edbaddae531a",
+  measurementId: "G-P70S5W3T86"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+
+sendBtn.addEventListener("click", sendMessage);
+
+// Send Message to Firebase
+function sendMessage() {
+  const username = document.getElementById("username").value;
+  const message = document.getElementById("message").value;
+
+  if (username === "" || message === "") return alert("Enter name and message");
+
+  db.ref("messages").push({
+    username: username,
+    message: message,
+    time: new Date().toLocaleTimeString()
+  });
+
+  document.getElementById("message").value = "";
+}
+
+// Listen for new messages
+db.ref("messages").on("child_added", (snapshot) => {
+  const data = snapshot.val();
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("message");
+
+  const currentUser = document.getElementById("username").value;
+  if (data.username === currentUser) msgDiv.classList.add("sent");
+  else msgDiv.classList.add("received");
+
+  msgDiv.textContent = `${data.username}: ${data.message} (${data.time})`;
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
