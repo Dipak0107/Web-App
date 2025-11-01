@@ -365,3 +365,53 @@ h2 {
   padding: 10px 15px;
   cursor: pointer;
 }
+/* Dark Mode */
+.dark {
+  background: #1b1b1b;
+}
+
+.dark .chat-container {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.dark .chat-box {
+  background: #121212;
+}
+
+.dark .sent {
+  background: #056162;
+}
+
+.dark .received {
+  background: #333;
+}
+
+.dark .chat-input {
+  background: #222;
+}
+
+.dark .chat-input input {
+  background: #333;
+  color: #fff;
+}
+@media (max-width: 480px) {
+  .chat-container {
+    width: 95%;
+    height: 90vh;
+  }
+
+  .chat-input input {
+    font-size: 14px;
+  }
+
+  .chat-input button {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+}

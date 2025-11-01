@@ -170,3 +170,65 @@ db.ref("messages").on("child_added", (snapshot) => {
   chatBox.appendChild(msgDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
 });
+const themeToggle = document.getElementById('themeToggle');
+
+// Load theme from localStorage
+document.addEventListener('DOMContentLoaded', () => {
+  const theme = localStorage.getItem('theme');
+  if (theme === 'dark') document.body.classList.add('dark');
+});
+
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  const mode = document.body.classList.contains('dark') ? 'dark' : 'light';
+  localStorage.setItem('theme', mode);
+  themeToggle.textContent = mode === 'dark' ? '☀️' : '🌙';
+});
+function sendMessage() {
+  const username = document.getElementById("username").value;
+  const message = document.getElementById("message").value;
+  if (username === "" || message === "") return alert("Enter name and message");
+
+  const now = new Date();
+  const time = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+
+  db.ref("messages").push({
+    username: username,
+    message: message,
+    time: time
+  });
+
+  document.getElementById("message").value = "";
+}
+
+db.ref("messages").on("child_added", (snapshot) => {
+  const data = snapshot.val();
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("message");
+
+  const currentUser = document.getElementById("username").value;
+  msgDiv.classList.add(data.username === currentUser ? "sent" : "received");
+
+  msgDiv.innerHTML = `
+    <strong>${data.username}</strong><br>
+    ${data.message}
+    <div class="time">${data.time}</div>
+  `;
+
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
+const provider = new firebase.auth.GoogleAuthProvider();
+const loginBtn = document.getElementById('loginBtn');
+const userInfo = document.getElementById('userInfo');
+
+loginBtn.addEventListener('click', () => {
+  firebase.auth().signInWithPopup(provider)
+    .then(result => {
+      const user = result.user;
+      userInfo.textContent = "Logged in as: " + user.displayName;
+      document.getElementById("username").value = user.displayName;
+      loginBtn.style.display = "none";
+    })
+    .catch(error => console.error(error));
+});
