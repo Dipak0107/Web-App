@@ -133,9 +133,8 @@ apiKey: "AIzaSyBkqiOMP4TOblb1wisLUSZ4vS-1WTVoqxQ",
   messagingSenderId: "245055908079",
   appId: "1:245055908079:web:8bba9dc811edbaddae531a",
   measurementId: "G-P70S5W3T86"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+}
+
 
 
 sendBtn.addEventListener("click", sendMessage);
@@ -217,13 +216,30 @@ db.ref("messages").on("child_added", (snapshot) => {
 
   chatBox.appendChild(msgDiv);
   chatBox.scrollTop = chatBox.scrollHeight;
-});
-const provider = new firebase.auth.GoogleAuthProvider();
+});firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
 const loginBtn = document.getElementById('loginBtn');
 const userInfo = document.getElementById('userInfo');
 
+// 🌙 Theme Load
+document.addEventListener('DOMContentLoaded', () => {
+  const theme = localStorage.getItem('theme');
+  if (theme === 'dark') document.body.classList.add('dark');
+});
+
+// 🌙 Toggle
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  const mode = document.body.classList.contains('dark') ? 'dark' : 'light';
+  localStorage.setItem('theme', mode);
+  themeToggle.textContent = mode === 'dark' ? '☀️' : '🌙';
+});
+
+// 🔐 Google Login
+const provider = new firebase.auth.GoogleAuthProvider();
 loginBtn.addEventListener('click', () => {
-  firebase.auth().signInWithPopup(provider)
+  auth.signInWithPopup(provider)
     .then(result => {
       const user = result.user;
       userInfo.textContent = "Logged in as: " + user.displayName;
@@ -232,3 +248,111 @@ loginBtn.addEventListener('click', () => {
     })
     .catch(error => console.error(error));
 });
+
+// 💬 Send Message
+sendBtn.addEventListener("click", sendMessage);
+function sendMessage() {
+  const username = document.getElementById("username").value;
+  const message = document.getElementById("message").value;
+  if (username === "" || message === "") return alert("Enter name and message");
+
+  const now = new Date();
+  const time = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+
+  db.ref("messages").push({
+    username,
+    message,
+    time
+  });
+
+  document.getElementById("message").value = "";
+}
+
+// 📡 Listen to new messages
+db.ref("messages").on("child_added", (snapshot) => {
+  const data = snapshot.val();
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("message");
+
+  const currentUser = document.getElementById("username").value;
+  msgDiv.classList.add(data.username === currentUser ? "sent" : "received");
+
+  msgDiv.innerHTML = `
+    <strong>${data.username}</strong><br>
+    ${data.message}
+    <div class="time">${data.time}</div>
+  `;
+
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
+let currentRoom = "general";
+const roomSelect = document.getElementById("roomSelect");
+
+// Room बदलल्यावर जुनं data clear करा
+roomSelect.addEventListener("change", () => {
+  currentRoom = roomSelect.value;
+  chatBox.innerHTML = "";
+  listenToRoom();
+});
+
+function listenToRoom() {
+  db.ref("rooms/" + currentRoom + "/messages").on("child_added", (snapshot) => {
+    const data = snapshot.val();
+    showMessage(data);
+  });
+}
+
+function sendMessage() {
+  const username = document.getElementById("username").value;
+  const message = document.getElementById("message").value;
+  if (username === "" || message === "") return alert("Enter name & message");
+
+  const now = new Date();
+  const time = now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");
+
+  db.ref("rooms/" + currentRoom + "/messages").push({ username, message, time });
+  document.getElementById("message").value = "";
+}
+
+function showMessage(data) {
+  const msgDiv = document.createElement("div");
+  msgDiv.classList.add("message");
+  const currentUser = document.getElementById("username").value;
+  msgDiv.classList.add(data.username === currentUser ? "sent" : "received");
+  msgDiv.innerHTML = `<strong>${data.username}</strong><br>${data.message}<div class="time">${data.time}</div>`;
+  chatBox.appendChild(msgDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+listenToRoom();
+db.ref("status").on("value", (snapshot) => {
+  const users = snapshot.val();
+  let onlineHTML = "🟢 Online: ";
+  for (let uid in users) {
+    if (users[uid].online) onlineHTML += users[uid].name + " ";
+  }
+  document.getElementById("onlineUsers").innerText = onlineHTML;
+});
+const typingRef = db.ref("typing/" + currentRoom);
+const messageInput = document.getElementById("message");
+
+// Typing send
+messageInput.addEventListener("input", () => {
+  const username = document.getElementById("username").value;
+  typingRef.set({ user: username, typing: true });
+  setTimeout(() => typingRef.set({ typing: false }), 2000);
+});
+
+// Listen typing
+typingRef.on("value", (snap) => {
+  const data = snap.val();
+  const typingText = document.getElementById("typingStatus");
+  if (data && data.typing) {
+    typingText.textContent = `${data.user} is typing...`;
+  } else {
+    typingText.textContent = "";
+  }
+});
+const sound = document.getElementById("msgSound");
+if (data.username !== currentUser) sound.play();
